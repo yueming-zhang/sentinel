@@ -132,3 +132,4 @@ sentinelhub/config.json
 /downloaded_data
 /sentinel_downloaded
 /sentinel_preprocessed
+secret.py

@@ -20,9 +20,7 @@ from sentinelhub import (
     bbox_to_dimensions,
 )
 
-
-client_id = "46631093-f7f3-4d7f-baf3-83edc378dbf3"
-client_secret = "(>H72?qZtUz[w/^;}AQ3@O#C@>WjFY8Yag)%t.Zg"
+from secret import client_id, client_secret
 
 config = SHConfig()
 config.sh_client_id = client_id
@@ -40,7 +38,7 @@ def plot_image(
     ax.set_xticks([])
     ax.set_yticks([])
 
-betsiboka_coords_wgs84 = (46.16, -16.15, 46.51, -15.58)
+betsiboka_coords_wgs84 = (46.16, -16.15, 46.51, -15.58)# interval_x = 0.35, interval_y = 0.57
 
 evalscript_all_bands = """
     //VERSION=3
@@ -52,7 +50,7 @@ evalscript_all_bands = """
             }],
             output: {
                 bands: 13,
-                sampleType: "INT16"
+                sampleType: "FLOAT32"
             }
         };
     }
@@ -99,7 +97,11 @@ def download(betsiboka_coords_wgs84):
 
 def download_images(start_index, end_index):
     for i in range(start_index, end_index):
-        bbx = (betsiboka_coords_wgs84[0]+i*0.35, betsiboka_coords_wgs84[1], betsiboka_coords_wgs84[2]+i*0.35, betsiboka_coords_wgs84[3])
+        bbx = (betsiboka_coords_wgs84[0]+i%10*0.35, 
+               betsiboka_coords_wgs84[1]+int(i/10)*0.57, 
+               betsiboka_coords_wgs84[2]+i%10*0.35, 
+               betsiboka_coords_wgs84[3]+int(i/10)*0.57)
         download(bbx)
+        print('.', end='')
 
-download_images(0,5)
+download_images(21,40)

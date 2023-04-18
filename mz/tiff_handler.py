@@ -5,6 +5,7 @@ from os import listdir
 from os.path import isfile, join
 from pathlib import Path
 from typing import List
+import time
 
 import numpy as np
 import rasterio
@@ -130,8 +131,15 @@ class TiffConverter:
 
     def reproject_merge(self, dst_crs: str = "EPSG:3857") -> Path:
         """Calls both reproject and merge functions in one go."""
+
+        # calculate duration of each step
+        start = time.time()
         self._reporject_raster_files(dst_crs)
+        end = time.time()
+        print(f"reprojecting rasters took {end - start} seconds", flush=True)
         dst_file = Path(self._merge_tiff_list(self.reporjected_tiff_paths))
+        end1 = time.time()
+        print(f"merging rasters took {end1 - end} seconds", flush=True)
         return dst_file
 
     # def clip_image_to_project(self, project_shape: ProjectShape) -> Path:

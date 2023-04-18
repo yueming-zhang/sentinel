@@ -27,4 +27,14 @@ def merge():
     pass
 
 
-merge()
+
+
+# if run as a script
+if __name__ == '__main__':
+    # preprocess()
+    
+    # # calculate the duration of merge()
+    import time
+    start_time = time.time()
+    merge() 
+    print("--- %s seconds ---" % (time.time() - start_time))
