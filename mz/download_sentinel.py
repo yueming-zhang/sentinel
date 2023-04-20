@@ -102,6 +102,7 @@ def download_images(start_index, end_index):
                betsiboka_coords_wgs84[2]+i%10*0.35, 
                betsiboka_coords_wgs84[3]+int(i/10)*0.57)
         download(bbx)
-        print('.', end='')
+        print('.', end='', flush=True)
 
-download_images(21,40)
+download_images(136,200) #TODO: start from 36 to 100 to complete 002
+

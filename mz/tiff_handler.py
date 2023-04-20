@@ -1,4 +1,6 @@
+from itertools import repeat
 import logging
+from multiprocessing import Pool
 import os
 
 from os import listdir
@@ -24,12 +26,17 @@ logger = logging.getLogger()
 class TiffConverter:
     """Loads raster tiff files from local, these and then be converted to common EPSG and merged."""
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, tiff_files = None) -> None:
         """Inits the converter and find's all tiffs in the path."""
         self.path = path
-        self.all_files = [f for f in listdir(self.path) if isfile(join(self.path, f))]
-        self.tiff_files = [i for i in self.all_files if i.split(".")[-1] == "tiff"]
-        self.reporjected_tiff_paths: List[str] = []
+        if tiff_files is None:
+            self.all_files = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+            self.tiff_files = [i for i in self.all_files if i.split(".")[-1] == "tiff"]
+        else:
+            self.all_files = tiff_files
+            self.tiff_files = tiff_files
+
+        self.reprojected_tiff_paths: List[str] = []
         self.CRS_list = self._crs_list()
         self.CRS_set = self._crs_set()
 
@@ -78,7 +85,7 @@ class TiffConverter:
     def reproject_raster(self, path: str, dst_crs: str = "EPSG:3857") -> None:
         """Re-projects a tiff raster file to new EPSG and saves to a directory named after tha EPSG in the source directory."""
         dest_path = self.path_to_repojected_path(path, dst_crs)
-        self.reporjected_tiff_paths.append(dest_path)
+        self.reprojected_tiff_paths.append(dest_path)
         self.ensure_path(dest_path, True)
 
         with rasterio.open(path) as src:
@@ -104,7 +111,7 @@ class TiffConverter:
                     dst_crs=dst_crs,
                     resampling=Resampling.nearest,
                     init_dest_nodata=True,
-                    num_threads=self.n_cores(),
+                    # num_threads=self.n_cores(),
                     **{"UNIFIED_SRC_NODATA": "xx", "SOURCE_EXTRA": 0},  # Remove this line?
                 )
                 dst.write(dest)
@@ -114,6 +121,15 @@ class TiffConverter:
         paths = self.add_path(self.tiff_files, True)
         for path in paths:
             self.reproject_raster(path, dst_crs)
+
+    def _reporject_raster_files_parallel(self, dst_crs: str = "EPSG:3857") -> None:
+        """Re-projects all rasters in the classes target data path."""
+       
+        paths = self.add_path(self.tiff_files, True)
+
+        with Pool() as p:
+            p.starmap(self.reproject_raster, zip(paths, repeat(dst_crs)))
+
 
     def _merge_tiff_list(self, paths: List[str]) -> Path:  # -> Tuple[NDArray, Affine]: (merged_data, _out_transform)
         """Merges all files in given list regardless of EPSG."""
@@ -132,12 +148,16 @@ class TiffConverter:
     def reproject_merge(self, dst_crs: str = "EPSG:3857") -> Path:
         """Calls both reproject and merge functions in one go."""
 
+        # if no files in the self.path, return None
+        if not self.tiff_files:
+            return None
+
         # calculate duration of each step
         start = time.time()
         self._reporject_raster_files(dst_crs)
         end = time.time()
         print(f"reprojecting rasters took {end - start} seconds", flush=True)
-        dst_file = Path(self._merge_tiff_list(self.reporjected_tiff_paths))
+        dst_file = Path(self._merge_tiff_list(self.reprojected_tiff_paths))
         end1 = time.time()
         print(f"merging rasters took {end1 - end} seconds", flush=True)
         return dst_file
