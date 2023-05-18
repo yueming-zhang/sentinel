@@ -52,6 +52,8 @@ def get_images_order_by_gps_location(folder, num_images=10):
     for image in image_files:
         if 'EPSG3857' not in folder and 'EPSG3857' in image:
             continue
+        if 'stitched' in image:
+            continue
         with rasterio.open(image) as src:
             gps = src.bounds
             image_files_with_gps.append((image, gps))
@@ -62,10 +64,10 @@ def get_images_order_by_gps_location(folder, num_images=10):
     # Return the specified number of images
     return [x[0] for x in image_files_with_gps[:num_images]]
 
-def merge_n(num_images=10):
+def merge_n(start, end):
     source_path = 'sentinel_preprocessed/001/'
-    images = get_images_order_by_gps_location(source_path, num_images)
-    short_image_names = [f.split('/')[-1] for f in images][:9]
+    images = get_images_order_by_gps_location(source_path, end)
+    short_image_names = [f.split('/')[-1] for f in images][start:end]
     tiff_converter = TiffConverter(source_path, short_image_names)
     tiff_converter.reproject_merge()
     pass
@@ -92,4 +94,5 @@ def merge_all():
 if __name__ == '__main__':
     # preprocess()
     # merge_all()    
-    merge_n(10)    
+    # merge_n(76,86)    
+    merge_n(0, 9)    

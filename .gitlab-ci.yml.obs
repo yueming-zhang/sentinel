@@ -1,0 +1,14 @@
+image: python:3.9
+
+stages:
+  - test
+
+run_sh_integration_tests:
+  stage: test
+  when: always
+  before_script:
+    - apt-get update
+    - apt-get install -y build-essential libgdal-dev proj-bin gcc libproj-dev libspatialindex-dev libopenjp2-7
+  script:
+    - pip install -e .[AWS,DEV]
+    - pytest -m "sh_integration"
